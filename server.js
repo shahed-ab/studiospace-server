@@ -5,6 +5,7 @@ import cors from "cors";
 import { connectDB } from "./config/db.js";
 import { notFound, errorHandler } from "./middleware/errorHandlers.js";
 import authRoutes from "./routes/authRoutes.js";
+import studioRoutes from "./routes/studioRoutes.js";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -49,7 +50,8 @@ app.get("/", (req, res) => res.json({ status: "ok", service: "studiospace-api" }
 app.get("/api/health", (req, res) => res.json({ status: "ok" }));
 
 // API routes
-app.use("/api/auth", authRoutes);
+app.use("/api/auth",    authRoutes);
+app.use("/api/studios", studioRoutes);
 
 // 404 and error handlers must come after all routes
 app.use(notFound);
