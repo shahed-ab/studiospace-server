@@ -3,14 +3,22 @@ import {
   listStudios,
   categoryStats,
   getStudio,
+  createStudio,
+  updateStudio,
+  deleteStudio,
 } from "../controllers/studioController.js";
+import { verifyJWT } from "../middleware/verifyJWT.js";
 
 const router = Router();
 
-// Public routes
-router.get("/",                   listStudios);
-router.get("/stats/categories",   categoryStats);  // must be before /:id
-router.get("/:id",                getStudio);
+// Public
+router.get("/",                 listStudios);
+router.get("/stats/categories", categoryStats); // must be before /:id
+router.get("/:id",              getStudio);
+
+// Protected
+router.post("/",        verifyJWT, createStudio);
+router.put("/:id",     verifyJWT, updateStudio);
+router.delete("/:id",  verifyJWT, deleteStudio);
 
 export default router;
-

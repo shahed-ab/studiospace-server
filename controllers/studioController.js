@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import Studio from "../models/Studio.js";
+import { validateStudio } from "../utils/validateStudio.js";
 
 // ─── Step 9: GET /api/studios ────────────────────────────────────────────────
 // Supports: search, category, minPrice, maxPrice, sort, page, limit
@@ -77,6 +78,87 @@ export async function getStudio(req, res, next) {
     const studio = await Studio.findById(id).lean();
     if (!studio) return res.status(404).json({ message: "Studio not found" });
     res.json(studio);
+  } catch (err) {
+    next(err);
+  }
+}
+
+// ─── Step 11: POST /api/studios ──────────────────────────────────────────────
+// Owner fields always come from req.user — never from the body.
+export async function createStudio(req, res, next) {
+  try {
+    const { errors, data } = validateStudio(req.body);
+    if (errors) return res.status(400).json({ message: errors[0] });
+
+    const studio = await Studio.create({
+      ...data,
+      ownerName:   req.user.name,
+      ownerEmail:  req.user.email,
+      ownerAvatar: req.user.photoURL || "",
+    });
+
+    res.status(201).json(studio);
+  } catch (err) {
+    next(err);
+  }
+}
+
+// ─── Step 11: GET /api/my-studios ────────────────────────────────────────────
+export async function myStudios(req, res, next) {
+  try {
+    const studios = await Studio
+      .find({ ownerEmail: req.user.email })
+      .sort({ createdAt: -1 })
+      .lean();
+    res.json(studios);
+  } catch (err) {
+    next(err);
+  }
+}
+
+// ─── Step 12: PUT /api/studios/:id ───────────────────────────────────────────
+// Owner only; never changes ownerEmail, rating, reviewCount, or reviews.
+export async function updateStudio(req, res, next) {
+  try {
+    const { id } = req.params;
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(404).json({ message: "Studio not found" });
+    }
+
+    const studio = await Studio.findById(id);
+    if (!studio) return res.status(404).json({ message: "Studio not found" });
+    if (studio.ownerEmail !== req.user.email) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    const { errors, data } = validateStudio(req.body);
+    if (errors) return res.status(400).json({ message: errors[0] });
+
+    Object.assign(studio, data); // ownerEmail/rating/reviewCount/reviews not in data
+    await studio.save();
+    res.json(studio);
+  } catch (err) {
+    next(err);
+  }
+}
+
+// ─── Step 12: DELETE /api/studios/:id ────────────────────────────────────────
+// Owner only. Wishlist cleanup added in step 20 once Wishlist model exists.
+export async function deleteStudio(req, res, next) {
+  try {
+    const { id } = req.params;
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(404).json({ message: "Studio not found" });
+    }
+
+    const studio = await Studio.findById(id);
+    if (!studio) return res.status(404).json({ message: "Studio not found" });
+    if (studio.ownerEmail !== req.user.email) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    await studio.deleteOne();
+    res.json({ message: "Studio deleted" });
   } catch (err) {
     next(err);
   }

@@ -4,8 +4,10 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import { connectDB } from "./config/db.js";
 import { notFound, errorHandler } from "./middleware/errorHandlers.js";
+import { verifyJWT } from "./middleware/verifyJWT.js";
 import authRoutes from "./routes/authRoutes.js";
 import studioRoutes from "./routes/studioRoutes.js";
+import { myStudios } from "./controllers/studioController.js";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -52,6 +54,7 @@ app.get("/api/health", (req, res) => res.json({ status: "ok" }));
 // API routes
 app.use("/api/auth",    authRoutes);
 app.use("/api/studios", studioRoutes);
+app.get("/api/my-studios", verifyJWT, myStudios);
 
 // 404 and error handlers must come after all routes
 app.use(notFound);
