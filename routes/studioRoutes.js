@@ -7,6 +7,7 @@ import {
   updateStudio,
   deleteStudio,
   getStudioAvailability,
+  addStudioReview,
 } from "../controllers/studioController.js";
 import { verifyJWT } from "../middleware/verifyJWT.js";
 
@@ -19,8 +20,9 @@ router.get("/:id/availability",     getStudioAvailability);
 router.get("/:id",                  getStudio);
 
 // Protected
-router.post("/",        verifyJWT, createStudio);
-router.put("/:id",     verifyJWT, updateStudio);
-router.delete("/:id",  verifyJWT, deleteStudio);
+router.post("/",            verifyJWT, createStudio);
+router.put("/:id",         verifyJWT, updateStudio);
+router.delete("/:id",      verifyJWT, deleteStudio);
+router.post("/:id/reviews", verifyJWT, addStudioReview);
 
 export default router;
