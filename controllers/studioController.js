@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import Studio from "../models/Studio.js";
+import Booking from "../models/Booking.js";
 import { validateStudio } from "../utils/validateStudio.js";
 
 // ─── Step 9: GET /api/studios ────────────────────────────────────────────────
@@ -159,6 +160,39 @@ export async function deleteStudio(req, res, next) {
 
     await studio.deleteOne();
     res.json({ message: "Studio deleted" });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// ─── Step 18: GET /api/studios/:id/availability?date=YYYY-MM-DD ─────────────
+// Returns the Confirmed time ranges for that studio and day
+export async function getStudioAvailability(req, res, next) {
+  try {
+    const { id } = req.params;
+    const { date } = req.query;
+
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(404).json({ message: "Studio not found" });
+    }
+
+    if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return res.status(400).json({ message: "date must be in YYYY-MM-DD format" });
+    }
+
+    const studio = await Studio.findById(id).lean();
+    if (!studio) {
+      return res.status(404).json({ message: "Studio not found" });
+    }
+
+    const confirmedBookings = await Booking.find(
+      { studioId: id, date, status: "Confirmed" },
+      "startTime endTime date status"
+    )
+      .sort({ startTime: 1 })
+      .lean();
+
+    res.json(confirmedBookings);
   } catch (err) {
     next(err);
   }

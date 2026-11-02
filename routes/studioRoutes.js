@@ -6,15 +6,17 @@ import {
   createStudio,
   updateStudio,
   deleteStudio,
+  getStudioAvailability,
 } from "../controllers/studioController.js";
 import { verifyJWT } from "../middleware/verifyJWT.js";
 
 const router = Router();
 
 // Public
-router.get("/",                 listStudios);
-router.get("/stats/categories", categoryStats); // must be before /:id
-router.get("/:id",              getStudio);
+router.get("/",                     listStudios);
+router.get("/stats/categories",     categoryStats); // must be before /:id
+router.get("/:id/availability",     getStudioAvailability);
+router.get("/:id",                  getStudio);
 
 // Protected
 router.post("/",        verifyJWT, createStudio);
