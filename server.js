@@ -8,6 +8,8 @@ import { verifyJWT } from "./middleware/verifyJWT.js";
 import authRoutes from "./routes/authRoutes.js";
 import studioRoutes from "./routes/studioRoutes.js";
 import bookingRoutes from "./routes/bookingRoutes.js";
+import dashboardRoutes from "./routes/dashboardRoutes.js";
+import wishlistRoutes from "./routes/wishlistRoutes.js";
 import { myStudios } from "./controllers/studioController.js";
 
 const app = express();
@@ -53,9 +55,11 @@ app.get("/", (req, res) => res.json({ status: "ok", service: "studiospace-api" }
 app.get("/api/health", (req, res) => res.json({ status: "ok" }));
 
 // API routes
-app.use("/api/auth",     authRoutes);
-app.use("/api/studios",  studioRoutes);
-app.use("/api/bookings", bookingRoutes);
+app.use("/api/auth",      authRoutes);
+app.use("/api/studios",   studioRoutes);
+app.use("/api/bookings",  bookingRoutes);
+app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/wishlist",  wishlistRoutes);
 app.get("/api/my-studios", verifyJWT, myStudios);
 
 // 404 and error handlers must come after all routes

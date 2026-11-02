@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import Studio from "../models/Studio.js";
 import Booking from "../models/Booking.js";
+import Wishlist from "../models/Wishlist.js";
 import { validateStudio } from "../utils/validateStudio.js";
 
 // ─── Step 9: GET /api/studios ────────────────────────────────────────────────
@@ -159,6 +160,8 @@ export async function deleteStudio(req, res, next) {
     }
 
     await studio.deleteOne();
+    // Step 20: Also delete its wishlist entries
+    await Wishlist.deleteMany({ studioId: id });
     res.json({ message: "Studio deleted" });
   } catch (err) {
     next(err);
@@ -193,6 +196,75 @@ export async function getStudioAvailability(req, res, next) {
       .lean();
 
     res.json(confirmedBookings);
+  } catch (err) {
+    next(err);
+  }
+}
+
+// ─── Step 19: POST /api/studios/:id/reviews ─────────────────────────────────
+// Only users with a Completed booking for that studio, one review per user per studio.
+// Recalculates rating (average) and reviewCount.
+export async function addStudioReview(req, res, next) {
+  try {
+    const { id } = req.params;
+    const { rating, comment } = req.body;
+
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(404).json({ message: "Studio not found" });
+    }
+
+    const numRating = Number(rating);
+    if (isNaN(numRating) || numRating < 1 || numRating > 5) {
+      return res.status(400).json({ message: "Rating must be a number between 1 and 5" });
+    }
+
+    if (!comment || typeof comment !== "string" || !comment.trim()) {
+      return res.status(400).json({ message: "Comment is required" });
+    }
+
+    const studio = await Studio.findById(id);
+    if (!studio) {
+      return res.status(404).json({ message: "Studio not found" });
+    }
+
+    // Must have a Completed booking for this studio
+    const hasCompletedBooking = await Booking.exists({
+      studioId: id,
+      userEmail: req.user.email,
+      status: "Completed",
+    });
+
+    if (!hasCompletedBooking) {
+      return res.status(403).json({
+        message: "You can only review studios you have completed a booking for",
+      });
+    }
+
+    // One review per user per studio
+    const alreadyReviewed = studio.reviews.some(
+      (r) => r.userEmail === req.user.email
+    );
+    if (alreadyReviewed) {
+      return res.status(400).json({
+        message: "You have already reviewed this studio",
+      });
+    }
+
+    studio.reviews.push({
+      userName: req.user.name,
+      userEmail: req.user.email,
+      userAvatar: req.user.photoURL || "",
+      rating: numRating,
+      comment: comment.trim(),
+      createdAt: new Date(),
+    });
+
+    studio.reviewCount = studio.reviews.length;
+    const sum = studio.reviews.reduce((acc, r) => acc + r.rating, 0);
+    studio.rating = Number((sum / studio.reviewCount).toFixed(2));
+
+    await studio.save();
+    res.status(201).json(studio);
   } catch (err) {
     next(err);
   }
