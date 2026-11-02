@@ -7,6 +7,7 @@ import { notFound, errorHandler } from "./middleware/errorHandlers.js";
 import { verifyJWT } from "./middleware/verifyJWT.js";
 import authRoutes from "./routes/authRoutes.js";
 import studioRoutes from "./routes/studioRoutes.js";
+import bookingRoutes from "./routes/bookingRoutes.js";
 import { myStudios } from "./controllers/studioController.js";
 
 const app = express();
@@ -52,8 +53,9 @@ app.get("/", (req, res) => res.json({ status: "ok", service: "studiospace-api" }
 app.get("/api/health", (req, res) => res.json({ status: "ok" }));
 
 // API routes
-app.use("/api/auth",    authRoutes);
-app.use("/api/studios", studioRoutes);
+app.use("/api/auth",     authRoutes);
+app.use("/api/studios",  studioRoutes);
+app.use("/api/bookings", bookingRoutes);
 app.get("/api/my-studios", verifyJWT, myStudios);
 
 // 404 and error handlers must come after all routes
