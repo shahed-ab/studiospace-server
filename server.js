@@ -4,6 +4,7 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import { connectDB } from "./config/db.js";
 import { notFound, errorHandler } from "./middleware/errorHandlers.js";
+import authRoutes from "./routes/authRoutes.js";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -46,6 +47,9 @@ app.use(async (req, res, next) => {
 // Health check routes
 app.get("/", (req, res) => res.json({ status: "ok", service: "studiospace-api" }));
 app.get("/api/health", (req, res) => res.json({ status: "ok" }));
+
+// API routes
+app.use("/api/auth", authRoutes);
 
 // 404 and error handlers must come after all routes
 app.use(notFound);
